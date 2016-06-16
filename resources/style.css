@@ -26,7 +26,7 @@ a:hover {
     font-family:"Ericsson";
     font-style:normal;
     font-weight:400;
-    src:url("fonts/Ericsson/EricssonCapitalTT.ttf") format("truetype")
+    src:url("https://spaces.ericsson.net/fonts/Ericsson/EricssonCapitalTT.ttf") format("truetype")
 }
 #header {
     width: 100%;
