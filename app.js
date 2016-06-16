@@ -28,6 +28,7 @@ function hideInstructions() {
     $('.box__instructions').hide();
     $('.box__share').hide();
     hideBox();
+    hideButton();
 }
 
 function showProgress() {
@@ -51,12 +52,24 @@ function isTouchDevice() {
     return (('ontouchstart' in window) || (navigator.MaxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0));
 }
 
+function showButton() {
+    $('.box__button').show();
+}
+
+function hideButton() {
+    $('.box__button').hide();
+}
+
 $(document).ready(function() {
 
     var isAdvancedUpload = function() {
         var div = document.createElement('div');
         return (('draggable' in div) || ('ondragstart' in div && 'ondrop' in div)) && 'FormData' in window && 'FileReader' in window;
     }();
+
+    if (isTouchDevice()) {
+            showButton();
+    }
 
     if (!isAdvancedUpload) {
         alert('Your browser does not support drag-n-drop');
@@ -201,6 +214,9 @@ $(document).ready(function() {
         client: client,
     });
 
+    var fileSelector = $('<input type="file" multiple="">');
+
+
     // Check if I was invited.
     isInitiator = !hash;
 
@@ -230,6 +246,28 @@ $(document).ready(function() {
                     cct.log.error('error', error);
                     logError('Something went wrong');
                 });
+        });
+        var button = $('.box__button');
+        button.on('click', function(e) {
+            fileSelector.click();
+        });
+        fileSelector.on('change', function(e) {
+            droppedFiles = e.target.files;
+
+            if (droppedFiles.length > 0) {
+                peer.start()
+                .then(setupListeners)
+                .then(function () {
+                    link = window.location.href;
+                    hideButton();
+                    $('.box__instructions').text('Share the following link with a friend:');
+                    $('.box__share').show(400).text(link);
+                })
+                .catch(function (error) {
+                    cct.log.error('error', error);
+                    logError('Something went wrong');
+                });
+            }
         });
     } else {
         hideInstructions();
