@@ -72,25 +72,30 @@ $(document).ready(function() {
             peer.room.on('join', function (user) {
                 console.log('User joined: ' + user);
                 connect();
-                log('Setup', 'Starting file sharing');
+                log('Setup', 'Starting data sharing');
                 var call = peer.setupCall();
-                setupFileSharing(call);
+                var data = setupCallData(call);
+                bindData(data);
             });
         } else {
             peer.room.on('call', function (call) {
                 call.start();
                 connect();
 
-                setupFileSharing(call);
+                var data = setupCallData(call);
+                bindData(data);
             });
         }
     }
 
-    function setupFileSharing(call) {
-        var fileShare = new cct.FileShare();
-        call.attach('files', fileShare);
+    function setupCallData(call) {
+        var data = new cct.FileShare();
+        call.attach('data', data);
+        return data;
+    }
 
-        setupEvents(fileShare);
+    function bindData(data) {
+        setupEvents(data);
 
         if (droppedFiles) {
             hideBox();
@@ -102,7 +107,7 @@ $(document).ready(function() {
 
                 var file = files[i];
                 var fileRef = cct.FileRef.fromFile(file);
-                fileShare.set('file', fileRef);
+                data.set(fileRef.name, fileRef);
                 var fileRefs = 0;
 
                 fileRef.on('transfer', function (transfer) {
@@ -146,24 +151,24 @@ $(document).ready(function() {
             fileDownload.click();
         }
 
-        function setupEvents(fileShare) {
+        function setupEvents(data) {
 
             showProgress();
 
             var fileRefs = 0
 
-            fileShare.on('update:file', function (fileRef) {
+            data.on('update', function (fileRef) {
 
                 fileRefs++
 
-                log('files', 'Got FileRef:', fileRef.name, fileRef);
+                log('files', 'Got FileRef ' + fileRef.value);
 
                 if (!isInitiator) {
                     var progressBar = document.createElement('progress');
                     progressBar.max = 1;
                     progressBar.value = 0;
                     progress.appendChild(progressBar);
-                    fileRef.fetch().then(function (file) {
+                    fileRef.value.fetch().then(function (file) {
                         fileRefs--
                         if(!fileRefs) {
                           showSuccess();
@@ -176,7 +181,7 @@ $(document).ready(function() {
                     });
                 }
 
-                fileRef.on('progress', function (progressValue) {
+                fileRef.value.on('progress', function (progressValue) {
                     progressBar.value = progressValue;
                 });
             });
