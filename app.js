@@ -184,7 +184,9 @@ $(document).ready(function() {
     }
 
     var hash = window.location.hash;
-    var client = new cct.Client();
+    var client = new cct.Client({
+        iceServers: EXAMPLE_UTILS_ICE_SERVERS
+    });
     var peer = new Peer2Peer({
         session: hash,
         client: client,
