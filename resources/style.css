@@ -1,0 +1,105 @@
+body {
+    background: url(img/purple.png) no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    color: #eee;
+    font-family: Arial;
+    margin: 0;
+    padding: 0;
+}
+h1 {
+  margin: 0;
+  font-size: 3em;
+  font-family: Ericsson;
+  font-weight: 400;
+}
+a {
+    text-decoration: underline;
+    color: #EEE;
+}
+a:hover {
+    color: #CCC;
+}
+@font-face {
+    font-family:"Ericsson";
+    font-style:normal;
+    font-weight:400;
+    src:url("fonts/Ericsson/EricssonCapitalTT.ttf") format("truetype")
+}
+#header {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+#header img {
+    position: relative;
+    left: 60px;
+    width: 100px;
+    height: 89px;
+}
+.top {
+    width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 100px;
+}
+.box {
+    text-align: center;
+    padding: 40px;
+    padding-top: 80px;
+    width: 50%;
+    min-height: 240px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 3px dashed #EEE;
+    border-radius: 15px;
+    font-size: 2.3em;
+}
+.box.is-dragover {
+    background-color: rgba(255, 255, 255, 0.35);
+    border: 4px dashed #EEE;
+}
+.box__dragndrop,
+.box__share,
+#box__progress,
+.box__success,
+.box__error {
+    display: none;
+}
+.box__share {
+    font-size: 50%;
+    margin-top: 20px;
+}
+.box__success {
+    color: #06B906;
+}
+.box__error {
+    color: #FF4949;
+}
+.box__note {
+    font-size: 40%;
+    font-style: italic;
+}
+.box__another_file {
+    color: #eee;
+    font-size: 45%;
+    margin: 0;
+    padding: 0;
+}
+.content {
+    margin-top: 20px;
+}
+#box__progress {
+    text-align: center;
+}
+#isConnected {
+    text-align: center;
+    display: none;
+}
+.contact {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 80%;
+}
