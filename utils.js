@@ -203,7 +203,7 @@ function logError(ret) {
 }
 
 function getCctAddress() { // eslint-disable-line no-unused-vars
-    return 'https://demo.cct.ericsson.net';
+    return 'https://demo.c3.ericsson.net';
 }
 
 var EXAMPLE_UTILS_ICE_SERVERS = [ // eslint-disable-line no-unused-vars
