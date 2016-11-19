@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
- function connect() {
-    var conn = document.getElementById('isConnected');
-    conn.textContent = 'Connected';
-    conn.style.color = 'rgba(0,255,0,0.5)';
-}
-
 function hideBox() {
     $('.box').css('border', '0');
 }
@@ -61,62 +55,129 @@ function hideButton() {
 }
 
 $(document).ready(function() {
-
     var isAdvancedUpload = function() {
         var div = document.createElement('div');
         return (('draggable' in div) || ('ondragstart' in div && 'ondrop' in div)) && 'FormData' in window && 'FileReader' in window;
     }();
 
     if (isTouchDevice()) {
-            showButton();
+        showButton();
     }
 
     if (!isAdvancedUpload) {
         alert('Your browser does not support drag-n-drop');
     }
 
-    cct.log.setLogLevel(cct.log.ALL);
+    cct.log.setLogLevel(cct.log.INFO);
+    cct.log.setLogLevel('file-ref', cct.log.ALL);
     cct.log.color = true;
 
     var progress = document.getElementById('box__progress');
 
+    var client = new cct.Client({
+        iceServers: EXAMPLE_UTILS_ICE_SERVERS
+    });
+    var connectionPromise = connectClient(client)
+    window.client = client // to simplify debugging
+
     var link;
     var droppedFiles = false;
-    var isInitiator = true;
+    var roomId = window.location.hash.slice(1);
+    var isInitiator = !roomId;
 
-    function setupListeners(room) {
-        if (isInitiator) {
-            peer.room.on('join', function (user) {
-                console.log('User joined: ' + user);
-                connect();
-                log('Setup', 'Starting data sharing');
-                var call = peer.setupCall();
-                var data = setupCallData(call);
-                bindData(data);
-            });
-        } else {
-            peer.room.on('call', function (call) {
-                call.start();
-                connect();
+    if (isInitiator) {
+        var box = $('.box');
+        box.on('drag dragstart dragend dragover dragenter dragleave drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        })
+        .on('dragover dragenter', function() {
+            box.addClass('is-dragover');
+        })
+        .on('dragleave dragend drop', function() {
+            box.removeClass('is-dragover');
+        })
+        .on('drop', function(e) {
+            onFiles(e.originalEvent.dataTransfer.files);
+        });
 
-                var data = setupCallData(call);
-                bindData(data);
-            });
+        var fileSelector = $('<input type="file" multiple="">');
+
+        var button = $('.box__button');
+        button.on('click', function(e) {
+            fileSelector.click();
+        });
+        fileSelector.on('change', function(e) {
+            onFiles(e.target.files)
+        });
+
+        function onFiles(files) {
+            if (!droppedFiles) {
+                droppedFiles = files
+                start(client)
+                $('.box__instructions').text('Connecting...');
+            }
         }
+    } else {
+        hideInstructions();
+        start(client, roomId)
+        window.addEventListener('hashchange', function () {
+            location.reload()
+        })
     }
 
-    function setupCallData(call) {
+    function start(client, roomId) {
+        return connectionPromise
+            .then(enterRoom.bind(0, roomId))
+            .then(setupCall)
+            .catch(function (error) {
+                console.log('error: ', error)
+                handleError('Failed to connect to server', error);
+            });
+    }
+
+    function setupCall(room) {
+        console.log('Setting up call');
+        var call
+        if (isInitiator) {
+            call = room.startPassiveCall()
+            $('.box__instructions').text('Share the following link with a friend:');
+            $('.box__share').show(400).text(window.location.href + '#' + room.id);
+        } else {
+            let creator = room.state('m.room.create').get().creator
+            call = room.startCall(creator)
+        }
+
+        // for easy debugging
+        window.room = room
+        window.call = call
+
         var data = new cct.FileShare();
         call.attach('data', data);
-        return data;
+
+        bindData(data);
+
+        var statusText = document.getElementById('isConnected');
+        call.on('connectionState', connectionState => {
+            if (connectionState === 'connected') {
+                statusText.textContent = 'Connected';
+                statusText.style.color = 'rgba(0,255,0,0.5)';
+            } else if (connectionState === 'connecting' || connectionState === 'signaling') {
+                statusText.textContent = 'Connecting';
+                statusText.style.color = 'rgba(255,255,0,0.5)';
+            } else if (connectionState === 'failed' || connectionState === 'disconnected') {
+                statusText.textContent = 'Connected';
+                statusText.style.color = 'rgba(255,0,0,0.5)';
+            }
+        })
     }
 
     function bindData(data) {
-        setupEvents(data);
-
-        if (droppedFiles) {
+        if (isInitiator) {
             hideBox();
             handleFiles(droppedFiles);
+        } else {
+            setupEvents(data)
         }
 
         function handleFiles(files) {
@@ -134,12 +195,12 @@ $(document).ready(function() {
                     progressBar.max = 1;
                     progress.appendChild(progressBar);
 
-                    log('Transfer', 'Transfer to ' + transfer.peer.id);
+                    console.log('Transfer to ' + transfer.peer.id);
                     transfer.on('progress', function (progress) {
                         progressBar.value = progress;
                     });
                     transfer.on('done', function () {
-                        log('Transfer', 'Transfer to ' + transfer.peer.id + ' completed');
+                        console.log('Transfer to ' + transfer.peer.id + ' completed');
                         var ele = progress.getElementsByTagName('span');
                         if (ele.length !== 0) {
                             progress.removeChild(ele[0]);
@@ -150,11 +211,11 @@ $(document).ready(function() {
                         }
                     });
                     transfer.on('error', function (error) {
-                        log('Transfer', 'Transfer to ' + transfer.peer.id + ' failed: ', error);
+                        console.log('Transfer to ' + transfer.peer.id + ' failed: ', error);
                         showError();
                     });
                     transfer.on('end', function (reason) {
-                        log('Transfer', 'Transfer to ' + transfer.peer.id + ' ended: ' + reason);
+                        console.log('Transfer to ' + transfer.peer.id + ' ended: ' + reason);
                     });
                 });
             }
@@ -178,7 +239,7 @@ $(document).ready(function() {
 
                 fileRefs++
 
-                log('files', 'Got FileRef ' + fileRef.value);
+                console.log('Got FileRef ' + fileRef.value);
 
                 if (!isInitiator) {
                     var progressBar = document.createElement('progress');
@@ -203,83 +264,5 @@ $(document).ready(function() {
                 });
             });
         }
-    }
-
-    var hash = window.location.hash;
-    var client = new cct.Client({
-        iceServers: EXAMPLE_UTILS_ICE_SERVERS
-    });
-    var peer = new Peer2Peer({
-        session: hash,
-        client: client,
-    });
-
-    var fileSelector = $('<input type="file" multiple="">');
-
-
-    // Check if I was invited.
-    isInitiator = !hash;
-
-    if (isInitiator) {
-        var box = $('.box');
-        box.on('drag dragstart dragend dragover dragenter dragleave drop', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        })
-        .on('dragover dragenter', function() {
-            box.addClass('is-dragover');
-        })
-        .on('dragleave dragend drop', function() {
-            box.removeClass('is-dragover');
-        })
-        .on('drop', function(e) {
-            droppedFiles = e.originalEvent.dataTransfer.files;
-
-            peer.start()
-                .then(setupListeners)
-                .then(function () {
-                    link = window.location.href;
-                    $('.box__instructions').text('Share the following link with a friend:');
-                    $('.box__share').show(400).text(link);
-                })
-                .catch(function (error) {
-                    cct.log.error('error', error);
-                    logError('Something went wrong');
-                });
-        });
-        var button = $('.box__button');
-        button.on('click', function(e) {
-            fileSelector.click();
-        });
-        fileSelector.on('change', function(e) {
-            droppedFiles = e.target.files;
-
-            if (droppedFiles.length > 0) {
-                peer.start()
-                .then(setupListeners)
-                .then(function () {
-                    link = window.location.href;
-                    hideButton();
-                    $('.box__instructions').text('Share the following link with a friend:');
-                    $('.box__share').show(400).text(link);
-                })
-                .catch(function (error) {
-                    cct.log.error('error', error);
-                    logError('Something went wrong');
-                });
-            }
-        });
-    } else {
-        hideInstructions();
-
-        peer.start()
-            .then(setupListeners)
-            .then(function () {
-                // TODO Something?
-            })
-            .catch(function (error) {
-                cct.log.error('error', error);
-                logError('Something went wrong');
-            });
     }
 });
