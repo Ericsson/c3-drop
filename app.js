@@ -72,7 +72,7 @@ $(document).ready(function() {
     cct.log.setLogLevel('file-ref', cct.log.ALL);
     cct.log.color = true;
 
-    var progress = document.getElementById('box__progress');
+    var progressBarBox = document.getElementById('box__progress');
 
     var client = new cct.Client({
         iceServers: EXAMPLE_UTILS_ICE_SERVERS
@@ -177,7 +177,7 @@ $(document).ready(function() {
             hideBox();
             handleFiles(droppedFiles);
         } else {
-            setupEvents(data)
+            handleRemoteFiles(data)
         }
 
         function handleFiles(files) {
@@ -193,7 +193,7 @@ $(document).ready(function() {
                     fileRefs++
                     var progressBar = document.createElement('progress');
                     progressBar.max = 1;
-                    progress.appendChild(progressBar);
+                    progressBarBox.appendChild(progressBar);
 
                     console.log('Transfer to ' + transfer.peer.id);
                     transfer.on('progress', function (progress) {
@@ -201,9 +201,9 @@ $(document).ready(function() {
                     });
                     transfer.on('done', function () {
                         console.log('Transfer to ' + transfer.peer.id + ' completed');
-                        var ele = progress.getElementsByTagName('span');
+                        var ele = progressBarBox.getElementsByTagName('span');
                         if (ele.length !== 0) {
-                            progress.removeChild(ele[0]);
+                            progressBarBox.removeChild(ele[0]);
                         }
                         fileRefs--
                         if(!fileRefs) {
@@ -229,40 +229,39 @@ $(document).ready(function() {
             fileDownload.click();
         }
 
-        function setupEvents(data) {
-
+        function handleRemoteFiles(data) {
             showProgress();
 
             var fileRefs = 0
 
-            data.on('update', function (fileRef) {
-
+            data.on('update', function (update) {
+                var fileRef = update.value
                 fileRefs++
-
-                console.log('Got FileRef ' + fileRef.value);
-
-                if (!isInitiator) {
-                    var progressBar = document.createElement('progress');
-                    progressBar.max = 1;
-                    progressBar.value = 0;
-                    progress.appendChild(progressBar);
-                    fileRef.value.fetch().then(function (file) {
-                        fileRefs--
-                        if(!fileRefs) {
-                          showSuccess();
-                        }
-                        downloadFile(file);
-                    }).catch(function (error) {
-                        cct.log.error('error', 'Failed to download file:', error);
-                        logError('Failed to download file: ', error);
-                        showError();
-                    });
-                }
-
-                fileRef.value.on('progress', function (progressValue) {
-                    progressBar.value = progressValue;
+                console.log('Got FileRef ' + fileRef);
+                transferFile(fileRef).then(function (file) {
+                    fileRefs--
+                    if(!fileRefs) {
+                      showSuccess();
+                    }
+                    downloadFile(file);
+                }).catch(function (error) {
+                    cct.log.error('error', 'Failed to download file:', error);
+                    logError('Failed to download file: ', error);
+                    showError();
                 });
             });
         }
+    }
+
+    function transferFile(fileRef) {
+        var progressBar = document.createElement('progress');
+        progressBar.max = 1;
+        progressBar.value = 0;
+        progressBarBox.appendChild(progressBar);
+
+        fileRef.on('progress', function (progressValue) {
+            progressBar.value = progressValue;
+        });
+        return fileRef.fetch()
     }
 });
