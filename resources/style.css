@@ -71,6 +71,8 @@ a:hover {
 .box__share {
     font-size: 50%;
     margin-top: 20px;
+    user-select: all;
+    -moz-user-select: all;
 }
 .box__success {
     color: #06B906;
