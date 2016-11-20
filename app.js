@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+function showConnecting() {
+    $('.box__instructions').text('Connecting...');
+    hideBox()
+    hideButton();
+}
+
 function hideBox() {
     $('.box').css('border', '0');
 }
@@ -30,16 +36,22 @@ function showProgress() {
     $('#box__progress').show();
 }
 
-function showSuccess() {
-    $('.box__success').show();
-    $('#box__progress').hide();
-    $('.box__note').hide();
+function hideProgress() {
     hideInstructions();
+    $('.box__note').hide();
+    $('#box__progress').hide();
+    $('#isConnected').hide();
 }
 
-function showError() {
+function showSuccess() {
+    $('.box__success').show();
+    hideProgress();
+}
+
+function showError(message) {
     $('.box__error').show();
-    $('.box__note').hide();
+    $('.box__error__message').text(message);
+    hideProgress();
 }
 
 function isTouchDevice() {
@@ -71,8 +83,6 @@ $(document).ready(function() {
     cct.log.setLogLevel(cct.log.INFO);
     cct.log.setLogLevel('file-ref', cct.log.ALL);
     cct.log.color = true;
-
-    var progressBarBox = document.getElementById('box__progress');
 
     var client = new cct.Client({
         iceServers: EXAMPLE_UTILS_ICE_SERVERS
@@ -115,12 +125,18 @@ $(document).ready(function() {
             if (!droppedFiles) {
                 droppedFiles = files
                 start(client)
-                $('.box__instructions').text('Connecting...');
+                showConnecting()
             }
         }
+
+        connectionPromise.catch(function (error) {
+            console.log('Could not connect to server:', error)
+            showError('Error! Could not connect to server')
+        });
     } else {
         hideInstructions();
         start(client, roomId)
+        showConnecting()
         window.addEventListener('hashchange', function () {
             location.reload()
         })
@@ -131,8 +147,8 @@ $(document).ready(function() {
             .then(enterRoom.bind(0, roomId))
             .then(setupCall)
             .catch(function (error) {
-                console.log('error: ', error)
-                handleError('Failed to connect to server', error);
+                console.log('Could not connect to server:', error)
+                showError('Error! Could not connect to server')
             });
     }
 
@@ -149,119 +165,115 @@ $(document).ready(function() {
         }
 
         // for easy debugging
-        window.room = room
-        window.call = call
+        window.room = room;
+        window.call = call;
 
-        var data = new cct.FileShare();
-        call.attach('data', data);
+        var fileShare = new cct.FileShare();
+        call.attach('fileShare', fileShare);
 
-        bindData(data);
+        if (isInitiator) {
+            handleLocalFiles(fileShare, droppedFiles);
+        } else {
+            handleRemoteFiles(fileShare)
+        }
 
-        var statusText = document.getElementById('isConnected');
+        call.on('connected', showProgress);
+
+        let status = $('#isConnected')
+        status.show()
         call.on('connectionState', connectionState => {
             if (connectionState === 'connected') {
-                statusText.textContent = 'Connected';
-                statusText.style.color = 'rgba(0,255,0,0.5)';
+                status.text('Connected');
+                status.css('color', 'rgba(0,255,0,0.5)');
             } else if (connectionState === 'connecting' || connectionState === 'signaling') {
-                statusText.textContent = 'Connecting';
-                statusText.style.color = 'rgba(255,255,0,0.5)';
+                status.text('Connecting');
+                status.css('color', 'rgba(255,255,0,0.5)');
             } else if (connectionState === 'failed' || connectionState === 'disconnected') {
-                statusText.textContent = 'Connected';
-                statusText.style.color = 'rgba(255,0,0,0.5)';
+                status.text('Disconnected');
+                status.css('color', 'rgba(255,0,0,0.5)');
             }
         })
     }
 
-    function bindData(data) {
-        if (isInitiator) {
-            hideBox();
-            handleFiles(droppedFiles);
-        } else {
-            handleRemoteFiles(data)
-        }
+    function handleLocalFiles(fileShare, files) {
+        var fileRefs = 0;
 
-        function handleFiles(files) {
-            for (var i = 0; i < files.length; i++) {
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var fileRef = cct.FileRef.fromFile(file);
+            fileShare.set(fileRef.name, fileRef);
 
-                var file = files[i];
-                var fileRef = cct.FileRef.fromFile(file);
-                data.set(fileRef.name, fileRef);
-                var fileRefs = 0;
-
-                fileRef.on('transfer', function (transfer) {
-
-                    fileRefs++
-                    var progressBar = document.createElement('progress');
-                    progressBar.max = 1;
-                    progressBarBox.appendChild(progressBar);
-
-                    console.log('Transfer to ' + transfer.peer.id);
-                    transfer.on('progress', function (progress) {
-                        progressBar.value = progress;
-                    });
-                    transfer.on('done', function () {
-                        console.log('Transfer to ' + transfer.peer.id + ' completed');
-                        var ele = progressBarBox.getElementsByTagName('span');
-                        if (ele.length !== 0) {
-                            progressBarBox.removeChild(ele[0]);
-                        }
-                        fileRefs--
-                        if(!fileRefs) {
-                          showSuccess();
-                        }
-                    });
-                    transfer.on('error', function (error) {
-                        console.log('Transfer to ' + transfer.peer.id + ' failed: ', error);
-                        showError();
-                    });
-                    transfer.on('end', function (reason) {
-                        console.log('Transfer to ' + transfer.peer.id + ' ended: ' + reason);
-                    });
-                });
-            }
-        }
-
-        function downloadFile(file) {
-            var fileDownload = document.createElement('a');
-            fileDownload.download = file.name;
-            fileDownload.href = URL.createObjectURL(file);
-            document.body.appendChild(fileDownload);
-            fileDownload.click();
-        }
-
-        function handleRemoteFiles(data) {
-            showProgress();
-
-            var fileRefs = 0
-
-            data.on('update', function (update) {
-                var fileRef = update.value
+            fileRef.on('transfer', function (transfer) {
                 fileRefs++
-                console.log('Got FileRef ' + fileRef);
-                transferFile(fileRef).then(function (file) {
+                console.log('Transfer to ' + transfer.peer.id);
+                showProgressBar(transfer, transfer.once('end'))
+
+                transfer.on('done', function () {
+                    console.log('Transfer to ' + transfer.peer.id + ' completed');
                     fileRefs--
                     if(!fileRefs) {
-                      showSuccess();
+                        showSuccess();
                     }
-                    downloadFile(file);
-                }).catch(function (error) {
-                    cct.log.error('error', 'Failed to download file:', error);
-                    logError('Failed to download file: ', error);
-                    showError();
+                });
+
+                transfer.on('error', function (error) {
+                    console.log('Transfer to ' + transfer.peer.id + ' failed: ', error);
+                    showError('Error! Could not transfer file(s)');
                 });
             });
         }
     }
 
-    function transferFile(fileRef) {
+    function handleRemoteFiles(fileShare) {
+        var fileRefs = 0
+
+        fileShare.on('update', function (update) {
+            var fileRef = update.value
+            fileRefs++
+            transferFile(fileRef).then(function (file) {
+                fileRefs--
+                if(!fileRefs) {
+                    showSuccess();
+                }
+            }).catch(function (error) {
+                console.error('Failed to download file: ', error);
+                showError('Error! Could not download file(s)');
+            });
+        });
+    }
+
+    function showProgressBar(target, completionPromise) {
+        var progressBarBox = document.getElementById('box__progress');
         var progressBar = document.createElement('progress');
         progressBar.max = 1;
         progressBar.value = 0;
         progressBarBox.appendChild(progressBar);
 
-        fileRef.on('progress', function (progressValue) {
+        target.on('progress', function (progressValue) {
             progressBar.value = progressValue;
         });
-        return fileRef.fetch()
+
+        completionPromise.catch(function (error) {}).then(function () {
+            progressBarBox.removeChild(progressBar);
+        })
+    }
+
+    function transferFile(fileRef) {
+        console.log('starting file download for ' + fileRef)
+        if (window.downloadWithServiceWorker) {
+            var download = window.downloadWithServiceWorker(fileRef)
+            showProgressBar(download, download.promise)
+            return download.promise
+        } else {
+            showProgressBar(fileRef, fileRef.fetch())
+            return fileRef.fetch().then(function (file) {
+                var anchor = document.createElement('a');
+                anchor.download = file.name;
+                anchor.href = URL.createObjectURL(file);
+                document.body.appendChild(anchor);
+                anchor.click();
+                return file
+            })
+        }
     }
 });

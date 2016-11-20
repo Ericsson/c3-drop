@@ -48,7 +48,7 @@ a:hover {
 .box {
     text-align: center;
     padding: 40px;
-    padding-top: 80px;
+    padding-top: 40px;
     width: 50%;
     min-height: 240px;
     margin-left: auto;
@@ -79,6 +79,9 @@ a:hover {
 }
 .box__error {
     color: #FF4949;
+}
+.box__instructions {
+    margin-top: 20px;
 }
 .box__note {
     font-size: 40%;
