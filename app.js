@@ -195,22 +195,21 @@ $(document).ready(function() {
     }
 
     function handleLocalFiles(fileShare, files) {
-        var fileRefs = 0;
+        var fileCount = files.length;
+        var transferred = 0
 
-        for (var i = 0; i < files.length; i++) {
-            var file = files[i];
-            var fileRef = cct.FileRef.fromFile(file);
+        for (var i = 0; i < fileCount; i++) {
+            var fileRef = cct.FileRef.fromFile(files[i]);
             fileShare.set(fileRef.name, fileRef);
 
             fileRef.on('transfer', function (transfer) {
-                fileRefs++
                 console.log('Transfer to ' + transfer.peer.id);
                 showProgressBar(transfer, transfer.once('end'))
 
                 transfer.on('done', function () {
                     console.log('Transfer to ' + transfer.peer.id + ' completed');
-                    fileRefs--
-                    if(!fileRefs) {
+                    transferred += 1
+                    if (transferred === fileCount) {
                         showSuccess();
                     }
                 });
@@ -224,21 +223,33 @@ $(document).ready(function() {
     }
 
     function handleRemoteFiles(fileShare) {
-        var fileRefs = 0
+        var downloadQueue
 
         fileShare.on('update', function (update) {
-            var fileRef = update.value
-            fileRefs++
-            transferFile(fileRef).then(function (file) {
-                fileRefs--
-                if(!fileRefs) {
-                    showSuccess();
-                }
+            var fileRef = update.value;
+            console.log('fileRef: ', fileRef)
+            if (downloadQueue) {
+                downloadQueue.unshift(fileRef);
+            } else {
+                downloadQueue = [fileRef]
+                processQueue();
+            }
+        })
+
+        function processQueue() {
+            console.log('downloadQueue: ', downloadQueue)
+            var fileRef = downloadQueue.pop();
+            if (!fileRef) {
+                showSuccess();
+                return
+            }
+            transferFile(fileRef).then(function () {
+                setTimeout(processQueue, 500)
             }).catch(function (error) {
                 console.error('Failed to download file: ', error);
                 showError('Error! Could not download file(s)');
-            });
-        });
+            })
+        }
     }
 
     function showProgressBar(target, completionPromise) {
