@@ -81,7 +81,6 @@ $(document).ready(function() {
     }
 
     cct.log.setLogLevel(cct.log.INFO);
-    cct.log.setLogLevel('file-ref', cct.log.ALL);
     cct.log.color = true;
 
     var client = new cct.Client({
