@@ -74,3 +74,51 @@ function enterRoom(roomId) {
         return client.createRoom({joinRule: 'open'})
     }
 }
+
+if (navigator.serviceWorker && ReadableStream) {
+  navigator.serviceWorker.register('/downloadproxy.js').then(function (registration) {
+    window.registration = registration
+    console.log('Registered service worker')
+    return navigator.serviceWorker.ready;
+  }).then(function () {
+    console.log('Service worker is ready')
+    window.downloadWithServiceWorker = function (fileRef) {
+        var channel = new MessageChannel()
+        var port = channel.port1
+
+        port.onmessage = function (event) {
+            var anchor = document.createElement('a');
+            anchor.href = event.data.url;
+            anchor.click();
+            port.onmessage = null
+        }
+
+        navigator.serviceWorker.controller.postMessage({
+            type: 'start-download',
+            name: fileRef.name,
+            size: fileRef.size,
+        }, [channel.port2])
+
+        var stream = fileRef.stream()
+
+        stream.on('chunk', function (chunk) {
+            port.postMessage({
+                type: 'chunk',
+                chunk: chunk,
+            })
+        })
+
+        stream.promise.then(function () {
+            port.postMessage({type: 'done'})
+        })
+
+        stream.promise.catch(function (error) {
+            port.postMessage({type: 'error', error: error})
+        })
+
+        return stream
+    }
+  }).catch(function (error) {
+    console.error('ServiceWorker registration failed: ', error);
+  });
+}
