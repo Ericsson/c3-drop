@@ -66,6 +66,10 @@ function hideButton() {
     $('.box__button').hide();
 }
 
+window.addEventListener('hashchange', function () {
+    location.reload()
+})
+
 $(document).ready(function() {
     var isAdvancedUpload = function() {
         var div = document.createElement('div');
@@ -91,8 +95,8 @@ $(document).ready(function() {
 
     var link;
     var droppedFiles = false;
-    var roomId = window.location.hash.slice(1);
-    var isInitiator = !roomId;
+    var localRoomId = window.location.hash.slice(1);
+    var isInitiator = !localRoomId;
 
     if (isInitiator) {
         var box = $('.box');
@@ -134,16 +138,13 @@ $(document).ready(function() {
         });
     } else {
         hideInstructions();
-        start(client, roomId)
+        start(client, localRoomId)
         showConnecting()
-        window.addEventListener('hashchange', function () {
-            location.reload()
-        })
     }
 
-    function start(client, roomId) {
+    function start(client, localRoomId) {
         return connectionPromise
-            .then(enterRoom.bind(0, roomId))
+            .then(enterRoom.bind(0, localRoomId))
             .then(setupCall)
             .catch(function (error) {
                 console.log('Could not connect to server:', error)
@@ -157,7 +158,7 @@ $(document).ready(function() {
         if (isInitiator) {
             call = room.startPassiveCall()
             $('.box__instructions').text('Share the following link with a friend:');
-            $('.box__share').show(400).text(window.location.href + '#' + room.id);
+            $('.box__share').show(400).text(window.location.href + '#' + room.id.slice(1).split(':')[0]);
         } else {
             let creator = room.state('m.room.create').get().creator
             call = room.startCall(creator)

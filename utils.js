@@ -65,8 +65,9 @@ function connectClient(client) {
     }).then(client.auth)
 }
 
-function enterRoom(roomId) {
-    if (roomId) {
+function enterRoom(roomLocalId, client) {
+    if (roomLocalId) {
+        var roomId = '!' + roomLocalId + ':' + client.authInfo.serverName;
         console.log('Joining existing room ' + roomId)
         return client.getRoom(roomId).join();
     } else {
