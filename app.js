@@ -98,6 +98,15 @@ $(document).ready(function() {
     var localRoomId = window.location.hash.slice(1);
     var isInitiator = !localRoomId;
 
+    tryRegisterServiceWorker().catch(function (error) {
+        if (error.name === 'NeedsReloadError') {
+            console.log('Service worker needs a reload to complete installation')
+            location.reload()
+        } else {
+            console.error('Service worker installation failed: ', error)
+        }
+    })
+
     if (isInitiator) {
         var box = $('.box');
         box.on('drag dragstart dragend dragover dragenter dragleave drop', function(e) {
