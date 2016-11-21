@@ -16,7 +16,7 @@
 
 function showConnecting() {
     $('.box__instructions').text('Connecting...');
-    hideBox()
+    hideBox();
     hideButton();
 }
 
@@ -121,14 +121,14 @@ $(document).ready(function() {
             fileSelector.click();
         });
         fileSelector.on('change', function(e) {
-            onFiles(e.target.files)
+            onFiles(e.target.files);
         });
 
         function onFiles(files) {
             if (!droppedFiles) {
-                droppedFiles = files
-                start(client)
-                showConnecting()
+                droppedFiles = files;
+                start(client);
+                showConnecting();
             }
         }
 
@@ -138,8 +138,8 @@ $(document).ready(function() {
         });
     } else {
         hideInstructions();
-        start(client, localRoomId)
-        showConnecting()
+        start(client, localRoomId);
+        showConnecting();
     }
 
     function start(client, localRoomId) {
@@ -154,14 +154,14 @@ $(document).ready(function() {
 
     function setupCall(room) {
         console.log('Setting up call');
-        var call
+        var call;
         if (isInitiator) {
-            call = room.startPassiveCall()
+            call = room.startPassiveCall();
             $('.box__instructions').text('Share the following link with a friend:');
             $('.box__share').show(400).text(window.location.href + '#' + room.id.slice(1).split(':')[0]);
         } else {
-            let creator = room.state('m.room.create').get().creator
-            call = room.startCall(creator)
+            let creator = room.state('m.room.create').get().creator;
+            call = room.startCall(creator);
         }
 
         // for easy debugging
@@ -174,13 +174,13 @@ $(document).ready(function() {
         if (isInitiator) {
             handleLocalFiles(fileShare, droppedFiles);
         } else {
-            handleRemoteFiles(fileShare)
+            handleRemoteFiles(fileShare);
         }
 
         call.on('connected', showProgress);
 
-        let status = $('#isConnected')
-        status.show()
+        let status = $('#isConnected');
+        status.show();
         call.on('connectionState', connectionState => {
             if (connectionState === 'connected') {
                 status.text('Connected');
@@ -197,7 +197,7 @@ $(document).ready(function() {
 
     function handleLocalFiles(fileShare, files) {
         var fileCount = files.length;
-        var transferred = 0
+        var transferred = 0;
 
         for (var i = 0; i < fileCount; i++) {
             var fileRef = cct.FileRef.fromFile(files[i]);
@@ -205,11 +205,11 @@ $(document).ready(function() {
 
             fileRef.on('transfer', function (transfer) {
                 console.log('Transfer to ' + transfer.peer.id);
-                showProgressBar(transfer, transfer.once('end'))
+                showProgressBar(transfer, transfer.once('end'));
 
                 transfer.on('done', function () {
                     console.log('Transfer to ' + transfer.peer.id + ' completed');
-                    transferred += 1
+                    transferred += 1;
                     if (transferred === fileCount) {
                         showSuccess();
                     }
@@ -224,28 +224,28 @@ $(document).ready(function() {
     }
 
     function handleRemoteFiles(fileShare) {
-        var downloadQueue
+        var downloadQueue;
 
         fileShare.on('update', function (update) {
             var fileRef = update.value;
-            console.log('fileRef: ', fileRef)
+            console.log('fileRef: ', fileRef);
             if (downloadQueue) {
                 downloadQueue.unshift(fileRef);
             } else {
-                downloadQueue = [fileRef]
+                downloadQueue = [fileRef];
                 processQueue();
             }
         })
 
         function processQueue() {
-            console.log('downloadQueue: ', downloadQueue)
+            console.log('downloadQueue: ', downloadQueue);
             var fileRef = downloadQueue.pop();
             if (!fileRef) {
                 showSuccess();
                 return
             }
             transferFile(fileRef).then(function () {
-                setTimeout(processQueue, 500)
+                setTimeout(processQueue, 500);
             }).catch(function (error) {
                 console.error('Failed to download file: ', error);
                 showError('Error! Could not download file(s)');
@@ -272,18 +272,18 @@ $(document).ready(function() {
     function transferFile(fileRef) {
         console.log('starting file download for ' + fileRef)
         if (window.downloadWithServiceWorker) {
-            var download = window.downloadWithServiceWorker(fileRef)
-            showProgressBar(download, download.promise)
-            return download.promise
+            var download = window.downloadWithServiceWorker(fileRef);
+            showProgressBar(download, download.promise);
+            return download.promise;
         } else {
-            showProgressBar(fileRef, fileRef.fetch())
+            showProgressBar(fileRef, fileRef.fetch());
             return fileRef.fetch().then(function (file) {
                 var anchor = document.createElement('a');
                 anchor.download = file.name;
                 anchor.href = URL.createObjectURL(file);
                 document.body.appendChild(anchor);
                 anchor.click();
-                return file
+                return file;
             })
         }
     }

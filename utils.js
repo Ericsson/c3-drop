@@ -62,62 +62,62 @@ function connectClient(client) {
     return cct.Auth.anonymous({
         iceServers: EXAMPLE_UTILS_ICE_SERVERS,
         serverUrl: SERVER_URL
-    }).then(client.auth)
+    }).then(client.auth);
 }
 
 function enterRoom(roomLocalId, client) {
     if (roomLocalId) {
         var roomId = '!' + roomLocalId + ':' + client.authInfo.serverName;
-        console.log('Joining existing room ' + roomId)
+        console.log('Joining existing room ' + roomId);
         return client.getRoom(roomId).join();
     } else {
         console.log('Creating a new room');
-        return client.createRoom({joinRule: 'open'})
+        return client.createRoom({joinRule: 'open'});
     }
 }
 
 if (navigator.serviceWorker && ReadableStream) {
   navigator.serviceWorker.register('/downloadproxy.js').then(function (registration) {
-    window.registration = registration
-    console.log('Registered service worker')
+    window.registration = registration;
+    console.log('Registered service worker');
     return navigator.serviceWorker.ready;
   }).then(function () {
-    console.log('Service worker is ready')
+    console.log('Service worker is ready');
     window.downloadWithServiceWorker = function (fileRef) {
-        var channel = new MessageChannel()
-        var port = channel.port1
+        var channel = new MessageChannel();
+        var port = channel.port1;
 
         port.onmessage = function (event) {
             var anchor = document.createElement('a');
             anchor.href = event.data.url;
             anchor.click();
-            port.onmessage = null
+            port.onmessage = null;
         }
 
         navigator.serviceWorker.controller.postMessage({
             type: 'start-download',
             name: fileRef.name,
             size: fileRef.size,
-        }, [channel.port2])
+        }, [channel.port2]);
 
-        var stream = fileRef.stream()
+        var stream = fileRef.stream();
 
         stream.on('chunk', function (chunk) {
             port.postMessage({
                 type: 'chunk',
                 chunk: chunk,
-            })
+            });
         })
 
         stream.promise.then(function () {
-            port.postMessage({type: 'done'})
+            port.postMessage({type: 'done'});
         })
 
         stream.promise.catch(function (error) {
-            port.postMessage({type: 'error', error: error})
+            port.postMessage({type: 'error', error: error});
         })
 
-        return stream
+        return stream;
     }
   }).catch(function (error) {
     console.error('ServiceWorker registration failed: ', error);
