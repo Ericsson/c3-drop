@@ -48,7 +48,7 @@ a:hover {
 .box {
     text-align: center;
     padding: 40px;
-    padding-top: 80px;
+    padding-top: 40px;
     width: 50%;
     min-height: 240px;
     margin-left: auto;
@@ -71,12 +71,17 @@ a:hover {
 .box__share {
     font-size: 50%;
     margin-top: 20px;
+    user-select: all;
+    -moz-user-select: all;
 }
 .box__success {
     color: #06B906;
 }
 .box__error {
     color: #FF4949;
+}
+.box__instructions {
+    margin-top: 20px;
 }
 .box__note {
     font-size: 40%;
