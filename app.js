@@ -288,7 +288,7 @@ $(document).ready(function() {
             showProgressBar(fileRef, fileRef.fetch());
             return fileRef.fetch().then(function (file) {
                 var anchor = document.createElement('a');
-                anchor.download = file.name;
+                anchor.download = fileRef.name;
                 anchor.href = URL.createObjectURL(file);
                 document.body.appendChild(anchor);
                 anchor.click();
