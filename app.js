@@ -95,8 +95,8 @@ $(document).ready(function() {
 
     var link;
     var droppedFiles = false;
-    var localRoomId = window.location.hash.slice(1);
-    var isInitiator = !localRoomId;
+    var roomId = window.location.hash.slice(1);
+    var isInitiator = !roomId;
 
     tryRegisterServiceWorker().catch(function (error) {
         if (error.name === 'NeedsReloadError') {
@@ -147,13 +147,13 @@ $(document).ready(function() {
         });
     } else {
         hideInstructions();
-        start(client, localRoomId);
+        start(client, roomId);
         showConnecting();
     }
 
-    function start(client, localRoomId) {
+    function start(client, roomId) {
         return connectionPromise
-            .then(enterRoom.bind(0, localRoomId))
+            .then(enterRoom.bind(0, roomId))
             .then(setupCall)
             .catch(function (error) {
                 console.log('Could not connect to server:', error)
@@ -167,7 +167,7 @@ $(document).ready(function() {
         if (isInitiator) {
             call = room.startPassiveCall();
             $('.box__instructions').text('Share the following link with a friend:');
-            $('.box__share').show(400).text(window.location.href + '#' + room.id.slice(1).split(':')[0]);
+            $('.box__share').show(400).text(window.location.href + '#' + room.id);
         } else {
             let creator = room.state('m.room.create').get().creator;
             call = room.startCall(creator);
