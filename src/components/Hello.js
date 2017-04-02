@@ -1,7 +1,7 @@
 
 import React, {Component} from 'react'
 
-import './Hello.css'
+import styles from './Hello.css'
 
 export default class Hello extends Component {
   constructor(props) {
@@ -27,6 +27,6 @@ export default class Hello extends Component {
   }
 
   render() {
-    return <h1 className='Hello'>Hello! {this.state.count}</h1>
+    return <h1 className={styles.Hello}>Hello! {this.state.count}</h1>
   }
 }

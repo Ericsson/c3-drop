@@ -62,7 +62,9 @@ rules.push({
 })
 
 const cssProcessors = [
-  {loader: 'css-loader'},
+  {loader: 'css-loader', options: {
+    modules: true,
+  }},
   {loader: 'postcss-loader', options: {
     plugins: [
       AutoPrefixer({
