@@ -123,6 +123,12 @@ module.exports = {
     publicPath: '',
     filename: 'bundle.js',
   },
+  resolve: {
+    alias: {
+      components: path.resolve(__dirname, 'src/components/'),
+      images: path.resolve(__dirname, 'src/images/'),
+    },
+  },
   module: {
     rules,
   },
