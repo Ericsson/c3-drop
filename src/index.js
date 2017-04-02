@@ -1,10 +1,11 @@
 'use strict'
 
-import './main.css'
 
 import React from 'react'
 import ReactDOM from 'react-dom'
 import {AppContainer} from 'react-hot-loader'
+
+import 'styles/global.css'
 
 import Hello from 'components/Hello'
 
