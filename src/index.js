@@ -1,5 +1,13 @@
 'use strict'
 
-require('./main.css')
+import './main.css'
 
-console.log('Hello world!')
+import React from 'react'
+import ReactDOM from 'react-dom'
+
+const root = document.createElement('div')
+document.body.appendChild(root)
+
+ReactDOM.render(
+  <div>Hello world!</div>
+, root)
