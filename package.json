@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A web application for encrypted peer to peer file sharing.",
   "scripts": {
-    "build": "rm -r dist; webpack",
+    "build": "rm -r dist; NODE_ENV=production webpack -p",
     "serve": "webpack-dev-server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
