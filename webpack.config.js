@@ -44,6 +44,9 @@ rules.push({
     {loader: 'babel-loader', options: {
       cacheDirectory: true,
     }},
+    {loader: 'eslint-loader', options: {
+      emitWarning: true,
+    }},
   ],
 })
 
