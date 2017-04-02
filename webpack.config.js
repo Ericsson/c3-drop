@@ -9,6 +9,20 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const isProd = process.env.NODE_ENV === 'production'
 const isDev = !isProd
 
+function getVersion() {
+  let version = require('./package').version
+  let getCommitHash = require('child_process').spawnSync('git', ['rev-parse', 'HEAD'])
+  let commit = getCommitHash.stdout.toString().replace(/[^0-9a-f]/g, '')
+
+  let dirtyCheck = require('child_process').spawnSync('git', ['diff-index', '--quiet', 'HEAD', '--'])
+  let isDirty = dirtyCheck.status !== 0
+
+  if (isDirty) {
+    commit += '-dirty'
+  }
+  return {commit, version}
+}
+
 // Rules
 
 const rules = []
@@ -69,6 +83,7 @@ const plugins = []
 
 plugins.push(new webpack.NamedModulesPlugin())
 plugins.push(new HtmlWebpackPlugin({title: 'Ericsson C3 Drop', hash: true}))
+plugins.push(new webpack.DefinePlugin({'process.env.VERSION': JSON.stringify(getVersion())}))
 
 if (isDev) {
   plugins.push(new webpack.HotModuleReplacementPlugin())
