@@ -2,6 +2,7 @@
 
 const path = require('path')
 const webpack = require('webpack')
+const AutoPrefixer = require('autoprefixer')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 
@@ -12,12 +13,25 @@ const isDev = !isProd
 
 const rules = []
 
+const cssProcessors = [
+  {loader: 'css-loader'},
+  {loader: 'postcss-loader', options: {
+    plugins: [
+      AutoPrefixer({
+        browsers: ['>1%', 'last 4 versions', 'Firefox ESR', 'not ie < 9'], // From create-ract-app
+        cascade: true,
+        remove: true,
+      }),
+    ]
+  }},
+]
+
 if (isDev) {
   rules.push({
     test: /\.css$/,
     use: [
       {loader: 'style-loader'},
-      {loader: 'css-loader'},
+      ...cssProcessors,
     ],
   })
 }
@@ -25,9 +39,7 @@ if (isDev) {
 if (isProd) {
   rules.push({
     test: /\.css$/,
-    use: ExtractTextPlugin.extract([
-      {loader: 'css-loader'},
-    ]),
+    use: ExtractTextPlugin.extract(cssProcessors),
   })
 }
 
