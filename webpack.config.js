@@ -3,6 +3,7 @@
 const path = require('path')
 const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
 
 const isProd = process.env.NODE_ENV === 'production'
 const isDev = !isProd
@@ -11,13 +12,24 @@ const isDev = !isProd
 
 const rules = []
 
-rules.push({
-  test: /\.css$/,
-  use: [
-    {loader: 'style-loader'},
-    {loader: 'css-loader'},
-  ],
-})
+if (isDev) {
+  rules.push({
+    test: /\.css$/,
+    use: [
+      {loader: 'style-loader'},
+      {loader: 'css-loader'},
+    ],
+  })
+}
+
+if (isProd) {
+  rules.push({
+    test: /\.css$/,
+    use: ExtractTextPlugin.extract([
+      {loader: 'css-loader'},
+    ]),
+  })
+}
 
 // Plugins
 
@@ -31,6 +43,7 @@ if (isDev) {
 }
 
 if (isProd) {
+  plugins.push(new ExtractTextPlugin('bundle.css'))
   plugins.push(new webpack.optimize.UglifyJsPlugin({
     compress: {
       screw_ie8: true,
