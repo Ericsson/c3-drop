@@ -7,6 +7,18 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const isProd = process.env.NODE_ENV === 'production'
 const isDev = !isProd
 
+// Rules
+
+const rules = []
+
+rules.push({
+  test: /\.css$/,
+  use: [
+    {loader: 'style-loader'},
+    {loader: 'css-loader'},
+  ],
+})
+
 // Plugins
 
 const plugins = []
@@ -47,6 +59,9 @@ module.exports = {
     path: path.join(__dirname, 'dist'),
     publicPath: '',
     filename: 'bundle.js',
+  },
+  module: {
+    rules,
   },
   plugins,
 }
