@@ -23,6 +23,17 @@ function getVersion() {
   return {commit, version}
 }
 
+// Entry
+
+var entry = path.join(__dirname, 'src')
+
+if (isDev) {
+  entry = [
+    'react-hot-loader/patch',
+    entry,
+  ]
+}
+
 // Rules
 
 const rules = []
@@ -114,7 +125,7 @@ if (isProd) {
 module.exports = {
   devtool: isDev ? 'eval-cheap-module-source-map' : false,
   context: __dirname,
-  entry: path.join(__dirname, 'src'),
+  entry,
   devServer: {
     hot: true,
   },

@@ -3,9 +3,13 @@
     ["env", {
       "targets": {
         "browsers": ['>1%', 'last 4 versions', 'Firefox ESR', 'not ie < 9']
-      }
+      },
+      "modules": false
     }],
     "stage-2",
     "react"
+  ],
+  "plugins": [
+    "react-hot-loader/babel"
   ]
 }

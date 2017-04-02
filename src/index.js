@@ -4,12 +4,26 @@ import './main.css'
 
 import React from 'react'
 import ReactDOM from 'react-dom'
+import {AppContainer} from 'react-hot-loader'
 
 import Hello from 'components/Hello'
 
 const root = document.createElement('div')
 document.body.appendChild(root)
 
-ReactDOM.render(
-  <Hello/>
-, root)
+const render = Component => {
+  let app = (
+    <AppContainer>
+      <Component/>
+    </AppContainer>
+  )
+  ReactDOM.render(app, root)
+}
+
+render(Hello)
+
+if (module.hot) {
+  module.hot.accept('components/Hello', () => {
+    render(Hello)
+  })
+}
