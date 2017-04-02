@@ -14,32 +14,10 @@
  * limitations under the License.
  */
 
-'use strict'
-
 import React from 'react'
-import ReactDOM from 'react-dom'
-import {AppContainer} from 'react-hot-loader'
 
-import 'styles/global.css'
+import styles from './App.css'
 
-import App from 'components/App'
-
-const root = document.createElement('div')
-document.body.appendChild(root)
-
-const render = Component => {
-  let app = (
-    <AppContainer>
-      <Component/>
-    </AppContainer>
-  )
-  ReactDOM.render(app, root)
-}
-
-render(App)
-
-if (module.hot) {
-  module.hot.accept('components/App', () => {
-    render(App)
-  })
+export default function App() {
+  return <div className={styles.app}/>
 }
