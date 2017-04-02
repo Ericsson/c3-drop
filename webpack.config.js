@@ -14,6 +14,16 @@ const isDev = !isProd
 const rules = []
 
 rules.push({
+  test: /\.(jpe?g|png|gif|svg|eot|ttf|woff2?)$/,
+  use: [
+    {loader: 'url-loader', options: {
+      limit: 10000,
+      name: '[name].[hash:16].[ext]',
+    }},
+  ],
+})
+
+rules.push({
   test: /\.(js)$/,
   include: path.join(__dirname, 'src'),
   use: [
